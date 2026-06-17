@@ -19,19 +19,15 @@ on:
 jobs:
   checks:
     uses: ./.github/workflows/pr-check.yaml
-
   build:
     needs: checks
-
     strategy:
       matrix:
         include:
           - service: back
           - service: front
             with: --build-arg VITE_API_URL
-
     runs-on: ubuntu-latest
-
     steps:
       # получаем репозиторий
       - uses: actions/checkout@v4
@@ -65,11 +61,11 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/myapp/backend
-            git pull origin main
-            cd /var/www/myapp
-            docker compose up --build -d backend
             sed -i "s|^APP_VERSION=.*|APP_VERSION=sha-${{ github.sha }}|" .env.development.compose
+            cd /var/www/myapp
+            docker compose pull
+            docker compose up --build --no-deps back front
+
 
   verify:
     needs: build
@@ -84,7 +80,6 @@ jobs:
     needs: [ checks, build, deploy, verify ]
     runs-on: ubuntu-latest
     if: always()
-
     steps:
       - name: Notify Telegram
         run: |
