@@ -68,12 +68,17 @@ jobs:
 
 
   verify:
-    needs: build
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Verify Deployed
+      - uses: actions/checkout@v4
+      - name: Smoke
+        env:
+          E2E_BASE_URL: ${{ vars.VITE_API_URL }}
         run: |
-          echo "'Verify Deployed'"
+          # vars.VITE_API_URL у нас вида https://домен/api → отрежем /api
+          export E2E_BASE_URL="${E2E_BASE_URL%/api}"
+          bash scripts/smoke.sh
 
 
   notify:
