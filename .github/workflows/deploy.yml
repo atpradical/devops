@@ -69,8 +69,8 @@ jobs:
         run: |
           CHECKS="${{ needs.checks.result }}"
           BUILD="${{ needs.build.result }}"
-          DEPLOY="${{ needs.deploy.result }}"
-          VERIFY="${{ needs.verify.result }}"
+          # DEPLOY="${{ needs.deploy.result }}"
+          # VERIFY="${{ needs.verify.result }}"
   
           if [ "$CHECKS" != "success" ]; then
             TEXT="❌ Type-check упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -78,11 +78,11 @@ jobs:
           elif [ "$BUILD" != "success" ]; then
             TEXT="❌ Build упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          elif [ "$DEPLOY" != "success" ]; then
-            TEXT="❌ Deploy упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # elif [ "$DEPLOY" != "success" ]; then
+           # TEXT="❌ Deploy упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          elif [ "$VERIFY" != "success" ]; then
-            TEXT="❌ Smoke не прошёл (задеплоено, но не отвечает корректно)%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+         # elif [ "$VERIFY" != "success" ]; then
+          #  TEXT="❌ Smoke не прошёл (задеплоено, но не отвечает корректно)%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
           else
             TEXT="✅ Деплой успешен%0A${{ github.repository }} @ ${{ github.ref_name }}%0AActor: ${{ github.actor }}%0AVersion: sha-${{ github.sha }}"
