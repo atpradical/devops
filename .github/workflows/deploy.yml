@@ -62,7 +62,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             sed -i "s|^APP_VERSION=.*|APP_VERSION=sha-${{ github.sha }}|" .env.development.compose
-            cd /var/www/myapp
+            cd ~/myapp
             docker compose pull
             docker compose up --build --no-deps back front
 
