@@ -64,7 +64,7 @@ jobs:
             cd ~/myapp
             sed -i "s|^APP_VERSION=.*|APP_VERSION=sha-${{ github.sha }}|" .env.development.compose
             docker compose pull
-            docker compose up --build --no-deps back front
+            docker compose up -d --no-deps back front
 
 
   verify:
