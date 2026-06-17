@@ -81,8 +81,8 @@ jobs:
         run: |
           CHECKS="${{ needs.checks.result }}"
           BUILD="${{ needs.build.result }}"
-          # DEPLOY="${{ needs.deploy.result }}"
-          # VERIFY="${{ needs.verify.result }}"
+          DEPLOY="${{ needs.deploy.result }}"
+          VERIFY="${{ needs.verify.result }}"
   
           if [ "$CHECKS" != "success" ]; then
             TEXT="❌ Type-check упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
