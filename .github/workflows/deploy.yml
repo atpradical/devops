@@ -54,13 +54,25 @@ jobs:
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
   
 
-  #  deploy:
-  #    needs: build
-  #    runs-on: ubuntu-latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        run: | 
+          echo "Deploy to VPS"
+
+  verify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Deployed
+        run: |
+          echo "'Verify Deployed'"
 
 
   notify:
-    needs: [ checks, build ]    # deploy, verify
+    needs: [ checks, build, deploy, verify ]
     runs-on: ubuntu-latest
     if: always()
 
@@ -78,11 +90,11 @@ jobs:
           elif [ "$BUILD" != "success" ]; then
             TEXT="❌ Build упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          # elif [ "$DEPLOY" != "success" ]; then
-           # TEXT="❌ Deploy упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          elif [ "$DEPLOY" != "success" ]; then
+            TEXT="❌ Deploy упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-         # elif [ "$VERIFY" != "success" ]; then
-          #  TEXT="❌ Smoke не прошёл (задеплоено, но не отвечает корректно)%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          elif [ "$VERIFY" != "success" ]; then
+            TEXT="❌ Smoke не прошёл (задеплоено, но не отвечает корректно)%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
           else
             TEXT="✅ Деплой успешен%0A${{ github.repository }} @ ${{ github.ref_name }}%0AActor: ${{ github.actor }}%0AVersion: sha-${{ github.sha }}"
