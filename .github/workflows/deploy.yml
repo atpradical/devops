@@ -1,0 +1,62 @@
+# on: push в week4
+#  ↓
+#checks  ← вызов pr-check.yaml через uses:
+#  ↓
+#build   ← matrix по сервисам, push образов с двумя тегами
+#  ↓
+#deploy  ← SSH на VPS, обновление .env, рестарт compose
+#  ↓
+#verify  ← make smoke-deployed против живого домена
+#  ↓
+#notify  ← отдельный job с if: always(), Telegram
+
+name: Deploy
+
+on:
+  push:
+    branches: [ week4 ]
+
+jobs:
+  checks:
+    uses: ./.github/workflows/pr-check.yaml
+
+  build:
+    needs: checks
+
+    strategy:
+      matrix:
+        include:
+          - service: back
+          - service: front
+            with: --build-arg VITE_API_URL
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_sha: ${{ steps.build-push.outputs.image_sha }}
+
+    steps:
+      # получаем репозиторий
+      - uses: actions/checkout@v4
+
+        # логинимся в докер
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u ${{ vars.DOCKER_USER }} --password-stdin
+
+      # билд имаджа и пуш в докер
+      - name: Build & Push Docker Image
+        id: build-push
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL}}
+          IMAGE_SHA: ${{ vars.DOCKER_USER }}/todo-${{ matrix.service }}:sha-${{ github.sha }}
+          IMAGE_LATEST: ${{ vars.DOCKER_USER }}/todo-${{ matrix.service }}:latest
+        run: |
+          docker build ${{ matrix.with }} -t $IMAGE_SHA -t $IMAGE_LATEST ./${{ matrix.service }}
+          docker push $IMAGE_SHA 
+          docker push $IMAGE_LATEST
+          echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
+
+
+#  deploy:
+#    needs: checks
+#    runs-on: ubuntu-latest
