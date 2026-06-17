@@ -2,7 +2,7 @@ name: PR Checks
 
 on:
   pull_request:
-    branches: [week4]
+    branches: [main]
   workflow_call:        # позволяет другому workflow вызвать этот через uses:
 
 jobs:
