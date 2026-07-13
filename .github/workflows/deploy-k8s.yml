@@ -6,7 +6,7 @@ on:
 
 jobs:
   checks:
-    uses: ./.github/workflows/pr-check.yml
+    uses: ./.github/workflows/pr-check.yaml
 
   build:
     needs: [checks]
