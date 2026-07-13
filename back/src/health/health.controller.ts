@@ -13,7 +13,7 @@ export class HealthController {
   getHealth(): { status: 'ok'; version: string } {
     return {
       status: 'ok',
-      version: process.env.APP_VERSION ?? 'unknown',
+      version: process.env.APP_VERSION ?? 'unknown 123',
     };
   }
 }
