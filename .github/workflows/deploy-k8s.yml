@@ -16,6 +16,8 @@ jobs:
           - service: front
             with: --build-arg VITE_API_URL
     runs-on: ubuntu-latest
+    outputs:
+      image_sha: ${{ steps.build-push.outputs.image_sha }}
     steps:
       # получаем репозиторий
       - uses: actions/checkout@v4
