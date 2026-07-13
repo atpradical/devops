@@ -13,8 +13,9 @@
 name: Deploy
 
 on:
-  push:
-    branches: [ week4, week5 ]
+  workflow_dispatch:
+#  push:
+#    branches: [ week4, week5 ]
 
 jobs:
   checks:
