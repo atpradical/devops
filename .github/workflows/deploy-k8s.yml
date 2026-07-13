@@ -2,36 +2,44 @@ name: Deploy k8s
 
 on:
   push:
-    branches: [week6-lesson]
+    branches: [ week6-lesson ]
 
 jobs:
   checks:
     uses: ./.github/workflows/pr-check.yaml
-
   build:
-    needs: [checks]
+    needs: checks
+    strategy:
+      matrix:
+        include:
+          - service: back
+          - service: front
+            with: --build-arg VITE_API_URL
     runs-on: ubuntu-latest
-    outputs:
-      image_sha: ${{ steps.build-push.outputs.image_sha }}
     steps:
+      # получаем репозиторий
       - uses: actions/checkout@v4
 
-      - name: Вход в Docker Hub
-        run: docker login -u ${{ vars.DOCKER_USER }} -p ${{ secrets.DOCKER_PASS }}
+        # логинимся в докер
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u ${{ vars.DOCKER_USER }} --password-stdin
 
-      - name: Build and Push образа
+      # билд имаджа и пуш в докер
+      - name: Build & Push Docker Image
         id: build-push
         env:
-          IMAGE_SHA: ${{ vars.DOCKER_USER }}/backend:sha-${{ github.sha }}
-          IMAGE_LATEST: ${{ vars.DOCKER_USER }}/backend:latest
+          VITE_API_URL: ${{ vars.VITE_API_URL}}
+          IMAGE_SHA: ${{ vars.DOCKER_USER }}/todo-${{ matrix.service }}:sha-${{ github.sha }}
+          IMAGE_LATEST: ${{ vars.DOCKER_USER }}/todo-${{ matrix.service }}:latest
         run: |
-          docker build -t $IMAGE_SHA -t $IMAGE_LATEST .
-          docker push $IMAGE_SHA
+          docker build ${{ matrix.with }} -t $IMAGE_SHA -t $IMAGE_LATEST ./${{ matrix.service }}
+          docker push $IMAGE_SHA 
           docker push $IMAGE_LATEST
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
+  
 
   deploy:
-    needs: [build]
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
       - name: Configure kubectl
@@ -44,14 +52,52 @@ jobs:
           kubectl set image deployment/backend backend=${{ needs.build.outputs.image_sha }}
           kubectl rollout status deployment/backend --timeout=120s
 
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke
+        env:
+          E2E_BASE_URL: ${{ vars.VITE_API_URL }}
+        run: |
+          # vars.VITE_API_URL у нас вида https://домен/api → отрежем /api
+          export E2E_BASE_URL="${E2E_BASE_URL%/api}"
+          bash scripts/smoke.sh
+
+
   notify:
-    name: Notify JOB
-    needs: [checks, deploy, build]
+    needs: [ checks, build, deploy, verify ]
+    runs-on: ubuntu-latest
     if: always()
-    uses: ./.github/workflows/notify.yaml
-    with:
-      checks_result: ${{ needs.checks.result }}
-      deploy_result: ${{ needs.deploy.result }}
-    secrets:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Notify Telegram
+        run: |
+          CHECKS="${{ needs.checks.result }}"
+          BUILD="${{ needs.build.result }}"
+          DEPLOY="${{ needs.deploy.result }}"
+          VERIFY="${{ needs.verify.result }}"
+          
+          if [ "$CHECKS" != "success" ]; then
+            TEXT="❌ Type-check упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          elif [ "$BUILD" != "success" ]; then
+            TEXT="❌ Build упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          elif [ "$DEPLOY" != "success" ]; then
+            TEXT="❌ Deploy упал%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          elif [ "$VERIFY" != "success" ]; then
+            TEXT="❌ Smoke не прошёл (задеплоено, но не отвечает корректно)%0A${{ github.repository }} @ ${{ github.ref_name }}%0A${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          else
+            TEXT="✅ Деплой успешен%0A${{ github.repository }} @ ${{ github.ref_name }}%0AActor: ${{ github.actor }}%0AVersion: sha-${{ github.sha }}"
+          fi
+          
+          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=$TEXT" \
+          -d "disable_web_page_preview=true")
+          
+          echo "$RESPONSE"
+          echo "$RESPONSE" | grep -q '"ok":true' || { echo "Telegram API rejected"; exit 1; }
