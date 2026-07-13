@@ -18,7 +18,7 @@ spec:
         - name: dockerhub-cred
       containers:
         - name: backend-api
-          image: atpradical/todo-back:sha-84a4fe39ca21909efd70d78862a6ff7df123b8cd
+          image: ${IMAGE}
           ports:
             - containerPort: 3000
           env:
