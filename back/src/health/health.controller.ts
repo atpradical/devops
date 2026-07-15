@@ -23,7 +23,7 @@ export class HealthController {
 
     @Get('ready')
     getReadiness(): string {
-        if (this.readinessService.isReady()) {
+        if (!this.readinessService.isReady()) {
             throw new HttpException(
                 'Backend is not ready. Check logs for details.',
                 HttpStatus.SERVICE_UNAVAILABLE
