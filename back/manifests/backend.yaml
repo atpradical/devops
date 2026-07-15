@@ -18,7 +18,8 @@ spec:
         - name: dockerhub-cred
       containers:
         - name: backend-api
-          image: ${IMAGE}
+#          image: ${IMAGE}
+          image: atpradical/todo-back:sha-3d1e5509fdadfd1a78c90f1e21c9b5d0303faa5f
           resources:
             requests:
               cpu: "60m"
@@ -26,6 +27,29 @@ spec:
             limits:
               cpu: "100m"
               memory: "120Mi"
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            failureThreshold: 12    # 12 × 5 сек = 1 минута на старт
+            timeoutSeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+              httpGet:
+                path: /health
+                port: 3000
+              initialDelaySeconds: 0
+              periodSeconds: 15
+              failureThreshold: 3
+          readinessProbe:
+              httpGet:
+                path: /health/ready
+                port: 3000
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              failureThreshold: 3
+
           ports:
             - containerPort: 3000
           env:
