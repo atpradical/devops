@@ -5,7 +5,7 @@ metadata:
   labels:
     app: backend-api
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: backend-api
@@ -19,6 +19,13 @@ spec:
       containers:
         - name: backend-api
           image: ${IMAGE}
+          resources:
+            requests:
+              cpu: "60m"
+              memory: "100Mi"
+            limits:
+              cpu: "100m"
+              memory: "120Mi"
           ports:
             - containerPort: 3000
           env:
@@ -59,10 +66,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-api
+  labels:
+    app: backend-api
 spec:
   selector:
     app: backend-api
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 3000
   type: ClusterIP
