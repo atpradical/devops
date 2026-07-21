@@ -1,0 +1,17 @@
+name: Notify
+
+on:
+  workflow_call:
+    inputs:
+      checks_result:
+        required: true
+        type: string
+      deploy_result:
+        required: true
+        type: string
+
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_CHAT_ID:
+        required: true
