@@ -25,6 +25,7 @@ RUN npm run build
 
 # ---- Stage 2: nginx runtime ----
 FROM nginx:alpine AS runtime
+USER node
 #   - Copy the built static files from the builder stage to nginx's html dir
 COPY --from=builder /app/dist /usr/share/nginx/html
 #   - Copy the custom nginx.conf into /etc/nginx/conf.d/

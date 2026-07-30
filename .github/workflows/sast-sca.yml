@@ -49,6 +49,8 @@ jobs:
             --exclude=node_modules \
             --exclude=workflows \
             --exclude=manifests \
+            --exclude=k8s \
+            --exclude=deployment \
             --exclude=argocd \
             --exclude=helm \
             --exclude=dist \
