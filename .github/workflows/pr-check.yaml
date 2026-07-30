@@ -6,6 +6,10 @@ on:
   workflow_call:        # позволяет другому workflow вызвать этот через uses:
 
 jobs:
+  security-scan:
+    name: "Security scan"
+    uses: ./.github/workflows/sast-sca.yml@main
+
   typecheck:
     name: typecheck (${{ matrix.service }})
     runs-on: ubuntu-latest
