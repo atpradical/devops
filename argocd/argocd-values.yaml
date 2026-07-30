@@ -3,6 +3,10 @@ applicationSet:
 
 configs:
   cm:
+    url: https://argocd.ivan-dolgikh.com
+    accounts.github-actions: apiKey
+    accounts.github-actions.enabled: "true"
+    accounts.github-actions.policies: "p, role:github-actions, applications, *, *, allow"
     accounts.image-updater: apiKey
     helm.valuesFileSchemes: >-
       secrets+gpg-import, secrets+gpg-import-kubernetes, secrets+age-import,
