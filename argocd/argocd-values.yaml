@@ -12,7 +12,7 @@ configs:
       secrets+age-import-kubernetes, secrets, secrets+literal, https
   rbac:
     policy.csv: |
-      p, role:github-actions, applications, *, */*, allow
+      p, github-actions, applications, *, *, allow
 
 controller:
   replicas: 1
