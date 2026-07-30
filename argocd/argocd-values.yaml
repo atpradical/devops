@@ -14,7 +14,6 @@ configs:
     policy.csv: |
       p, role:github-actions, applications, *, */*, allow
 
-
 controller:
   replicas: 1
   metrics:
