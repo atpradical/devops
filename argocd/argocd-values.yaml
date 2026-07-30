@@ -14,6 +14,7 @@ configs:
       secrets+gpg-import, secrets+gpg-import-kubernetes, secrets+age-import,
       secrets+age-import-kubernetes, secrets, secrets+literal, https
 
+
 controller:
   replicas: 1
   metrics:
