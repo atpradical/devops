@@ -93,7 +93,7 @@ jobs:
       helm_path: helm-charts/backend-api/values-production.yaml
       image_name: ${{ needs.build.outputs.image_sha }}
       branch: main
-      gitops_repo: atpradical/argocd-devops.git
+      gitops_repo: atpradical/argocd-devops
       argocd_app_name: backend-api
       argocd_server: ${{ vars.ARGOCD_SERVER }}
     secrets:
