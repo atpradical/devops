@@ -69,8 +69,11 @@ jobs:
       - name: Install helm-secrets plugin
         run: helm plugin install https://github.com/jkroepke/helm-secrets --verify=false
 
-      - name: Install age
-        run: sudo apt-get install -y age
+      - name: Install age and sops
+        run: |
+          sudo apt-get install -y age
+          curl -sSLo /usr/local/bin/sops https://github.com/getsops/sops/releases/latest/download/sops-v3.10.2.linux.amd64
+          sudo chmod +x /usr/local/bin/sops
 
       - name: Write age key
         run: |
