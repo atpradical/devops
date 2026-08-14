@@ -18,4 +18,15 @@ k8s/dockerhub-secret.yaml
 kubeconfig
 *.kubeconfig
 
+# hw8: приватный age-ключ для SOPS — никогда не коммитить
+age-key.txt
+
+# terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# argocd keys
+argocd/argocd-deploy-key
+
 *.md

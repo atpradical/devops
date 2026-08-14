@@ -1,0 +1,89 @@
+name: CI/CD (EKS)
+
+on:
+  push:
+    branches: [week8]
+
+env:
+  ECR_BACKEND: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/todo-back
+  ECR_FRONTEND: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/todo-front
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: sha-${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ vars.AWS_REGION }} | \
+            docker login --username AWS --password-stdin \
+            ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./back
+          push: true
+          tags: |
+            ${{ env.ECR_BACKEND }}:sha-${{ github.sha }}
+            ${{ env.ECR_BACKEND }}:latest
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./front
+          push: true
+          build-args: VITE_API_URL=https://aws.ivan-dolgikh.com/api
+          tags: |
+            ${{ env.ECR_FRONTEND }}:sha-${{ github.sha }}
+            ${{ env.ECR_FRONTEND }}:latest
+
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --name devops-cluster --region ${{ vars.AWS_REGION }}
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install helm-secrets plugin
+        run: helm plugin install https://github.com/jkroepke/helm-secrets
+
+      - name: Install age
+        run: |
+          curl -sSL https://github.com/FiloSottile/age/releases/latest/download/age-v1.2.1-linux-amd64.tar.gz \
+            | tar -xz --strip-components=1 -C /usr/local/bin age/age age/age-keygen
+
+      - name: Write age key
+        run: |
+          echo "${{ secrets.AGE_SECRET_KEY }}" > /tmp/age-key.txt
+          echo "SOPS_AGE_KEY_FILE=/tmp/age-key.txt" >> $GITHUB_ENV
+
+      - name: Deploy myapp
+        run: |
+          helm upgrade --install myapp ./helm/myapp \
+            -f helm/myapp/values.yaml \
+            -f secrets://helm/myapp/secrets.yaml \
+            --set backend.image.tag="sha-${{ github.sha }}" \
+            --set frontend.image.tag="sha-${{ github.sha }}" \
+            --wait --timeout 5m
