@@ -70,9 +70,7 @@ jobs:
         run: helm plugin install https://github.com/jkroepke/helm-secrets --verify=false
 
       - name: Install age
-        run: |
-          curl -sSL https://github.com/FiloSottile/age/releases/latest/download/age-v1.2.1-linux-amd64.tar.gz \
-            | tar -xz --strip-components=1 -C /usr/local/bin age/age age/age-keygen
+        run: sudo apt-get install -y age
 
       - name: Write age key
         run: |
