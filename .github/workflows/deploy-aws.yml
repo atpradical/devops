@@ -72,8 +72,9 @@ jobs:
       - name: Install age and sops
         run: |
           sudo apt-get install -y age
-          curl -sSLo /usr/local/bin/sops https://github.com/getsops/sops/releases/latest/download/sops-v3.10.2.linux.amd64
-          sudo chmod +x /usr/local/bin/sops
+          SOPS_VERSION=$(curl -s https://api.github.com/repos/getsops/sops/releases/latest | grep tag_name | cut -d'"' -f4)
+          curl -sSLo /tmp/sops.deb "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops_${SOPS_VERSION#v}_amd64.deb"
+          sudo dpkg -i /tmp/sops.deb
 
       - name: Write age key
         run: |
